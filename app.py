@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import asyncio
 import os
+import wavelink
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -12,6 +13,15 @@ bot = commands.Bot(command_prefix="!",intents=intents)
 async def on_ready():
     print(f"✅ Successfully logged in as {bot.user.name}")
     await bot.tree.sync()
+	try:
+        node: wavelink.Node = wavelink.Node(uri="http://152.53.209.201:2012", password="Suno")
+        await wavelink.Pool.connect(client=bot, nodes=[node])
+        print("🎧 Connected to Suno Lavalink Node Successfully!")
+    except Exception as e:
+        print(f"❌ Lavalink connection failed: {e}")
+
+    
+
     await bot.change_presence(status=discord.Status.dnd, activity=None)
 
 # Message filter
