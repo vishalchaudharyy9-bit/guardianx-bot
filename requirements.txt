@@ -1,3 +1,4 @@
 discord.py
 asyncio
 datetime
+wavelink==3.2.0
