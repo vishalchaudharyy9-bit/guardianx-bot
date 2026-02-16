@@ -144,8 +144,11 @@ async def clear(interaction: discord.Interaction, amount: int):
 	
 #show help menu
 @bot.tree.command(name="greet",description="It will greet back the user")
-async def help_menu(interaction: discord.Interaction):
-    await interaction.response.send_message(f"Hey {interaction.user.mention}, how are you dude 🏋️")
+@app_commands.describe(user="select a user)
+async def help_menu(interaction: discord.Interaction, user: discord.Member= None):
+	if user == None:
+		user = interaction.user
+    await interaction.response.send_message(f"Hey {user.mention}, how are you dude 🏋️")
 
 
 # adds a role to selected user
@@ -219,9 +222,10 @@ async def remove_timeout(interaction: discord.Interaction, user: discord.Member)
         ) 
     
         embed = discord.Embed(
-    title= "Timeout Removed",
-    description= "fYour timeout in **{interaction.guild.name}** has been removed.",
-    color=discord.Color.orange())
+    title= "⚔️ Moderation Action",
+    description= f"✅ Your timeout in **{interaction.guild.name}** has been successfully lifted.",
+    color=discord.Color.purple())
+		embed.set_footer(f"Action performed by {interaction.user.name}")
     
         try:
              await user.send(embed=embed)
