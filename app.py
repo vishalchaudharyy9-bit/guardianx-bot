@@ -186,7 +186,7 @@ async def add_role(interaction: discord.Interaction, user: discord.Member, role:
         
 	        
 #timeout command
-@bot.tree.command(name="timeout",description="gives timeout to selected user")
+@bot.tree.command(name="mute",description="gives timeout to selected user")
 @app_commands.describe(user="select a user", duration="select a duration in hour", reason="enter the reason")
 @app_commands.checks.has_permissions(moderate_members=True)
 async def timeout(interaction: discord.Interaction, user: discord.Member, duration: int, reason: str = "no reason provided"):
@@ -207,8 +207,8 @@ async def timeout(interaction: discord.Interaction, user: discord.Member, durati
          
         
             
-@bot.tree.command(name="remove_timeout",description="removes the timeout of a user")
-@app_commands.describe(user="select a user")
+@bot.tree.command(name="unmute", description="Removes the timeout of a user")
+@app_commands.describe(user="Select a user")
 @app_commands.checks.has_permissions(moderate_members=True)
 async def remove_timeout(interaction: discord.Interaction, user: discord.Member):
     try:
@@ -216,25 +216,28 @@ async def remove_timeout(interaction: discord.Interaction, user: discord.Member)
         await interaction.response.send_message(
             f"✅ Removed timeout from {user.mention}.",
             ephemeral=True
-        ) 
-    
+        )
+
         embed = discord.Embed(
-    title= "⚔️ Moderation Action",
-    description= f"✅ Your timeout in **{interaction.guild.name}** has been successfully lifted.",
-    color=discord.Color.purple())
-	     embed.set_footer(f"Action performed by {interaction.user.name}")
-    
+            title="⚔️ Moderation Action",
+            description=f"✅ Your timeout in **{interaction.guild.name}** has been successfully lifted.",
+            color=discord.Color.purple()
+        )
+        embed.set_footer(text=f"Action performed by {interaction.user.name}")
+
         try:
-             await user.send(embed=embed)
+            await user.send(embed=embed)
         except discord.Forbidden:
             await interaction.followup.send(
                 f"⚠️ Could not DM {user.mention} (DMs might be off).",
                 ephemeral=True
             )
+
     except discord.Forbidden:
-         await interaction.response.send_message(f"🚫 I don’t have permission to untimeout {user.mention}.",
+        await interaction.response.send_message(
+            f"🚫 I don’t have permission to untimeout {user.mention}.",
             ephemeral=True
-        )
+		)
 	        
 	        
 	        
