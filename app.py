@@ -20,13 +20,30 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    bad_words = ("bsdk", "mc", "bc")
+    bad_words = ("bsdk", "mc", "bc","randi","chut","bhosdiwala","madarchod","jhatu","ma ki chut","ma ka bhosda","ma chuda")
 
     if any(word in message.content.lower() for word in bad_words):
         await message.delete()
         await message.channel.send(f"🚫 Hey {message.author.mention}, don’t use bad words!")
 
     await bot.process_commands(message)
+
+
+@bot.tree.command(name="ping", description="Check the bot's connection latency")
+async def ping(interaction: discord.Interaction):
+    latency = round(bot.latency * 1000)  # Convert seconds → ms
+    bot_pfp = bot.user.display_avatar.url  # Bot’s profile picture URL
+
+    embed = discord.Embed(
+        title="🏓 Pong!",
+        description=f"My current latency is **{latency}ms** ⚡",
+        color=discord.Color.green()
+    )
+    embed.set_thumbnail(url=bot_pfp)
+    embed.set_footer(text=f"Requested by {interaction.user.name}")
+
+    await interaction.response.send_message(embed=embed)
+	
 
 # Slash command: /announce
 @bot.tree.command(name="announce", description="Announce a message in a specific channel")
