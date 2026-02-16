@@ -4,7 +4,7 @@ from discord import app_commands
 import asyncio
 import os
 import wavelink
-import datete
+import datetime
 
 
 intents = discord.Intents.default()
