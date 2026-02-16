@@ -144,7 +144,7 @@ async def clear(interaction: discord.Interaction, amount: int):
 	
 #show help menu
 @bot.tree.command(name="greet",description="It will greet back the user")
-@app_commands.describe(user="select a user)
+@app_commands.describe(user="select a user")
 async def help_menu(interaction: discord.Interaction, user: discord.Member= None):
 	if user == None:
 		user = interaction.user
