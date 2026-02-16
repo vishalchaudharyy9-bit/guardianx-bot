@@ -142,13 +142,10 @@ async def clear(interaction: discord.Interaction, amount: int):
         
         
 	
-""'#show help menu
+#show help menu
 @bot.tree.command(name="greet",description="It will greet back the user")
-@app_commands.describe(user="select a user")
-async def help_menu(interaction: discord.Interaction, user: discord.Member= None):
-	if user == None:
-		user = interaction.user
-    await interaction.response.send_message(f"Hey {user.mention}, how are you dude 🏋️")"""
+async def help_menu(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Hey {user.mention}, how are you dude 🏋️")
 
 
 # adds a role to selected user
