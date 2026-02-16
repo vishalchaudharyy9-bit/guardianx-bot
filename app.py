@@ -632,6 +632,7 @@ async def join(interaction: discord.Interaction):
     await interaction.response.send_message(f"✅ Joined {channel.mention}", ephemeral=True)
 
 
+
 # ---------- /play ----------
 @bot.tree.command(name="play", description="Play a song or add it to the queue")
 @app_commands.describe(query="Song name or URL")
@@ -639,7 +640,7 @@ async def play(interaction: discord.Interaction, query: str):
     await interaction.response.defer()
 
     if not interaction.user.voice:
-        await interaction.followup.send("❌ Join a voice channel first.", ephemeral=True)
+        await interaction.followup.send("❌ Join a voice channel first.")
         return
 
     vc: wavelink.Player = interaction.guild.voice_client
@@ -647,9 +648,14 @@ async def play(interaction: discord.Interaction, query: str):
         vc = await interaction.user.voice.channel.connect(cls=wavelink.Player)
         vc.queue = wavelink.Queue()
 
-    tracks = await wavelink.YouTubeTrack.search(query=query)
+    try:
+        tracks = await wavelink.YouTubeTrack.search(query=query)
+    except Exception as e:
+        await interaction.followup.send(f"🚫 Lavalink search failed: `{e}`")
+        return
+
     if not tracks:
-        await interaction.followup.send("⚠️ No results found.", ephemeral=True)
+        await interaction.followup.send("⚠️ No results found.")
         return
 
     track = tracks[0]
@@ -672,7 +678,7 @@ async def play(interaction: discord.Interaction, query: str):
 
 
 async def play_next(guild, vc, channel):
-    if vc.queue.is_empty:
+    if vc.queue.is_empty():
         await channel.send("🎶 Queue finished!")
         return
 
@@ -697,9 +703,9 @@ async def pause(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc and vc.is_playing():
         await vc.pause()
-        await interaction.response.send_message("⏸️ Paused the track.", ephemeral=True)
+        await interaction.response.send_message("⏸️ Paused the track.")
     else:
-        await interaction.response.send_message("⚠️ Nothing is playing.", ephemeral=True)
+        await interaction.response.send_message("⚠️ Nothing is playing.")
 
 
 # ---------- /resume ----------
@@ -708,9 +714,9 @@ async def resume(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc and vc.is_paused():
         await vc.resume()
-        await interaction.response.send_message("▶️ Resumed playback.", ephemeral=True)
+        await interaction.response.send_message("▶️ Resumed playback.")
     else:
-        await interaction.response.send_message("⚠️ Nothing is paused.", ephemeral=True)
+        await interaction.response.send_message("⚠️ Nothing is paused.")
 
 
 # ---------- /stop ----------
@@ -720,9 +726,9 @@ async def stop(interaction: discord.Interaction):
     if vc:
         await vc.stop()
         await vc.disconnect()
-        await interaction.response.send_message("🛑 Stopped and left the channel.", ephemeral=True)
+        await interaction.response.send_message("🛑 Stopped and left the channel.")
     else:
-        await interaction.response.send_message("⚠️ Not connected to a voice channel.", ephemeral=True)
+        await interaction.response.send_message("⚠️ Not connected to a voice channel.")
 
 
 # ---------- /clear ----------
@@ -731,9 +737,9 @@ async def clear(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc and hasattr(vc, "queue"):
         vc.queue.clear()
-        await interaction.response.send_message("🧹 Queue cleared!", ephemeral=True)
+        await interaction.response.send_message("🧹 Queue cleared!")
     else:
-        await interaction.response.send_message("⚠️ No queue found.", ephemeral=True)
+        await interaction.response.send_message("⚠️ No queue found.")
 
 
 # ---------- /autoplay ----------
@@ -741,12 +747,12 @@ async def clear(interaction: discord.Interaction):
 async def autoplay(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc:
-        await interaction.response.send_message("⚠️ I'm not connected to a voice channel.", ephemeral=True)
+        await interaction.response.send_message("⚠️ I'm not connected to a voice channel.")
         return
 
     vc.autoplay = not getattr(vc, "autoplay", False)
     state = "✅ Enabled" if vc.autoplay else "❌ Disabled"
-    await interaction.response.send_message(f"🔁 Autoplay {state}", ephemeral=True)
+    await interaction.response.send_message(f"🔁 Autoplay {state}")
 
 
 # ---------- /247 ----------
@@ -754,19 +760,21 @@ async def autoplay(interaction: discord.Interaction):
 async def stay(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc:
-        await interaction.response.send_message("⚠️ I'm not connected to a voice channel.", ephemeral=True)
+        await interaction.response.send_message("⚠️ I'm not connected to a voice channel.")
         return
 
     vc.stay = not getattr(vc, "stay", False)
     state = "🟢 Enabled" if vc.stay else "🔴 Disabled"
-    await interaction.response.send_message(f"🎧 24/7 mode {state}", ephemeral=True)
+    await interaction.response.send_message(f"🎧 24/7 mode {state}")
 
 
-# ---------- Autoplay Next ----------
+# ---------- Auto-Play Next ----------
 @bot.listen("on_wavelink_track_end")
 async def on_track_end(payload: wavelink.TrackEndEventPayload):
     vc: wavelink.Player = payload.player
-    if getattr(vc, "autoplay", False) or not vc.queue.is_empty:
+    if getattr(vc, "autoplay", False) or not vc.queue.is_empty():
+		
         await play_next(payload.guild, vc, payload.player.channel)
 
 bot.run(os.getenv("TOKEN"))
+
