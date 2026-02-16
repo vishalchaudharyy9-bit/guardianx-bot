@@ -476,7 +476,120 @@ async def slowmode(interaction: discord.Interaction, seconds: int):
         await interaction.followup.send(f"⚠️ Unexpected error: `{e}`", ephemeral=True)
         
         
-        
+# ------------------ /warn ------------------
+@bot.tree.command(name="warn", description="Warn a user (3 warns = kick)")
+@app_commands.describe(user="Select a user to warn", reason="Reason for the warning")
+@app_commands.checks.has_permissions(moderate_members=True)
+async def warn(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
+    guild = interaction.guild
+    bot_member = guild.me
 
+    # Safety checks
+    if user.top_role >= bot_member.top_role:
+        await interaction.response.send_message("🚫 I can’t warn this user because their role is higher or equal to mine.", ephemeral=True)
+        return
+    if user == interaction.user:
+        await interaction.response.send_message("😅 You can’t warn yourself.", ephemeral=True)
+        return
+
+    # Load and update warnings
+    warnings = load_warnings()
+    guild_id = str(guild.id)
+    user_id = str(user.id)
+    warnings.setdefault(guild_id, {})
+    warnings[guild_id][user_id] = warnings[guild_id].get(user_id, 0) + 1
+    user_warns = warnings[guild_id][user_id]
+    save_warnings(warnings)
+
+    # DM Embed for user
+    warn_embed = discord.Embed(
+        title="⚠️ Warning Received",
+        description=f"You were warned in **{guild.name}**.\n**Reason:** {reason}\n**Warnings:** {user_warns}/3",
+        color=discord.Color.orange()
+    )
+    warn_embed.set_footer(text=f"Issued by {interaction.user.name}")
+
+    try:
+        await user.send(embed=warn_embed)
+    except discord.Forbidden:
+        await interaction.followup.send(f"⚠️ Could not DM {user.mention} (DMs off).", ephemeral=True)
+
+    # Moderator message
+    await interaction.response.send_message(
+        f"⚠️ {user.mention} warned for `{reason}`. They now have **{user_warns}/3 warnings.**",
+        ephemeral=True
+    )
+
+    # Kick on 3 warnings
+    if user_warns >= 3:
+        try:
+            kick_embed = discord.Embed(
+                title="🚨 You’ve Been Kicked",
+                description=f"You were kicked from **{guild.name}** after reaching **3 warnings.**",
+                color=discord.Color.red()
+            )
+            kick_embed.set_footer(text=f"Action by {interaction.user.name}")
+
+            try:
+                await user.send(embed=kick_embed)
+            except discord.Forbidden:
+                pass  # ignore DM fail
+
+            await user.kick(reason=f"Auto-kick: reached 3 warnings. Warned by {interaction.user.name}")
+            warnings[guild_id][user_id] = 0
+            save_warnings(warnings)
+
+            await interaction.followup.send(f"🚨 {user.mention} was kicked for reaching 3 warnings.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.followup.send("🚫 I don’t have permission to kick that user.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"⚠️ Unexpected error: `{e}`", ephemeral=True)
+
+
+
+# ------------------ /unwarn ------------------
+@bot.tree.command(name="unwarn", description="Remove one warning from a user")
+@app_commands.describe(user="Select a user to remove a warning from")
+@app_commands.checks.has_permissions(moderate_members=True)
+async def unwarn(interaction: discord.Interaction, user: discord.Member):
+    warnings = load_warnings()
+    guild_id = str(interaction.guild.id)
+    user_id = str(user.id)
+
+    if guild_id not in warnings or user_id not in warnings[guild_id]:
+        await interaction.response.send_message(f"⚠️ {user.mention} has no warnings to remove.", ephemeral=True)
+        return
+
+    if warnings[guild_id][user_id] <= 0:
+        await interaction.response.send_message(f"⚠️ {user.mention} already has 0 warnings.", ephemeral=True)
+        return
+
+    # Remove one warning
+    warnings[guild_id][user_id] -= 1
+    remaining = warnings[guild_id][user_id]
+    save_warnings(warnings)
+
+    # Embed for moderator
+    embed = discord.Embed(
+        title="🧹 Warning Removed",
+        description=f"Removed one warning from {user.mention}.\nCurrent total: `{remaining}/3`",
+        color=discord.Color.green()
+    )
+    embed.set_footer(text=f"Action by {interaction.user.name}")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # DM the user
+    dm_embed = discord.Embed(
+        title="✅ Warning Reduced",
+        description=f"Your warning count in **{interaction.guild.name}** was reduced by one.\nCurrent total: `{remaining}/3`",
+        color=discord.Color.green()
+    )
+    dm_embed.set_footer(text=f"Moderator: {interaction.user.name}")
+
+    try:
+        await user.send(embed=dm_embed)
+    except discord.Forbidden:
+        await interaction.followup.send(f"⚠️ Could not DM {user.mention} (DMs off).", ephemeral=True)
+		
 
 bot.run(os.getenv("TOKEN"))
