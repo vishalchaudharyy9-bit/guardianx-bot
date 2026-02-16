@@ -222,7 +222,7 @@ async def remove_timeout(interaction: discord.Interaction, user: discord.Member)
     title= "⚔️ Moderation Action",
     description= f"✅ Your timeout in **{interaction.guild.name}** has been successfully lifted.",
     color=discord.Color.purple())
-		embed.set_footer(f"Action performed by {interaction.user.name}")
+	     embed.set_footer(f"Action performed by {interaction.user.name}")
     
         try:
              await user.send(embed=embed)
